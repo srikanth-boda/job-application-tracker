@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Resume PDFs are private: only the owner can read, and uploads must be small PDFs.
+// Objects are create-only (no overwrite, no delete) so a resume version tied to an application never changes.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /resumes/{userId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.contentType == 'application/pdf'
+        && request.resource.size > 0
+        && request.resource.size <= 5 * 1024 * 1024
+        && fileName.matches('[A-Za-z0-9_-]+\\.pdf');
+
+      allow update, delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

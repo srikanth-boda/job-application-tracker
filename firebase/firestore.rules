@@ -1,0 +1,184 @@
+rules_version = '2';
+
+// Ownership-based rules. Default is DENY; every collection is opened explicitly.
+// Payment data (paymentOrders, payments, subscriptions, plans) is written ONLY by the server
+// (Admin SDK bypasses rules), so clients can never grant themselves a paid plan.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function ownsExisting() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    function createsOwn() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+    function userIdUnchanged() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+    function isText(value, minLen, maxLen) {
+      return value is string && value.size() >= minLen && value.size() <= maxLen;
+    }
+    function isNullOrText(value, maxLen) {
+      return value == null || (value is string && value.size() <= maxLen);
+    }
+    // getAfter so a parent and its children can be created in one batch.
+    function ownsApplication(applicationId) {
+      return isText(applicationId, 1, 128)
+        && getAfter(/databases/$(database)/documents/applications/$(applicationId)).data.userId == request.auth.uid;
+    }
+    function ownsResume(resumeId) {
+      return isText(resumeId, 1, 128)
+        && getAfter(/databases/$(database)/documents/resumes/$(resumeId)).data.userId == request.auth.uid;
+    }
+    function validStatus(status) {
+      return status in ['saved', 'applied', 'recruiter_response', 'screening', 'interview',
+                        'offer', 'accepted', 'rejected', 'withdrawn'];
+    }
+    function validSource(source) {
+      return source in ['linkedin', 'naukri', 'indeed', 'company_portal', 'referral',
+                        'recruiter', 'internshala', 'wellfound', 'other'];
+    }
+
+    // ---------- users ----------
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.id == userId
+        && request.resource.data.keys().hasOnly(['id', 'email', 'displayName', 'timezone', 'createdAt', 'updatedAt'])
+        && isText(request.resource.data.email, 3, 320);
+      allow delete: if false;
+
+      // ---------- applications subcollection: users/{userId}/applications/{applicationId} ----------
+      match /applications/{applicationId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && validApplication(request.resource.data);
+      }
+    }
+
+    // ---------- applications (top-level compatibility) ----------
+    function validApplication(d) {
+      return ((d.company is string && d.company.size() >= 1 && d.company.size() <= 200) ||
+              (d.companyName is string && d.companyName.size() >= 1 && d.companyName.size() <= 200))
+        && isText(d.jobTitle, 1, 200)
+        && validSource(d.source)
+        && validStatus(d.status)
+        && isNullOrText(d.location, 200)
+        && isNullOrText(d.resumeUrl, 2048)
+        && isNullOrText(d.resumeName, 200)
+        && isNullOrText(d.jobUrl, 2048)
+        && isNullOrText(d.jobDescriptionSnapshot, 50000)
+        && isNullOrText(d.notes, 10000);
+    }
+    match /applications/{applicationId} {
+      allow read: if ownsExisting();
+      allow create: if createsOwn() && validApplication(request.resource.data);
+      allow update: if ownsExisting() && userIdUnchanged() && validApplication(request.resource.data);
+      allow delete: if ownsExisting();
+    }
+
+    // ---------- statusHistory (append-only) ----------
+    match /statusHistory/{entryId} {
+      allow read: if ownsExisting();
+      allow create: if createsOwn()
+        && ownsApplication(request.resource.data.applicationId)
+        && validStatus(request.resource.data.toStatus)
+        && (request.resource.data.fromStatus == null || validStatus(request.resource.data.fromStatus));
+      allow update, delete: if false;
+    }
+
+    // ---------- resumes (immutable versions; only rename/archive) ----------
+    function validResumeCreate(d, resumeId) {
+      return isText(d.name, 1, 120)
+        && d.contentType == 'application/pdf'
+        && d.sizeBytes is int && d.sizeBytes > 0 && d.sizeBytes <= 5242880
+        && d.archived == false
+        && d.storagePath == 'resumes/' + request.auth.uid + '/' + resumeId + '.pdf';
+    }
+    match /resumes/{resumeId} {
+      allow read: if ownsExisting();
+      allow create: if createsOwn() && validResumeCreate(request.resource.data, resumeId);
+      allow update: if ownsExisting() && userIdUnchanged()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'archived', 'updatedAt'])
+        && isText(request.resource.data.name, 1, 120)
+        && request.resource.data.archived is bool;
+      // Never delete: applications may reference the exact version. Archive instead.
+      allow delete: if false;
+    }
+
+    // ---------- contacts ----------
+    function validContact(d) {
+      return isText(d.name, 1, 200)
+        && isNullOrText(d.role, 200)
+        && isNullOrText(d.email, 320)
+        && isNullOrText(d.phone, 30)
+        && isNullOrText(d.linkedinUrl, 2048)
+        && isNullOrText(d.notes, 10000)
+        && (d.applicationId == null || ownsApplication(d.applicationId));
+    }
+    match /contacts/{contactId} {
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwn() && validContact(request.resource.data);
+      allow update: if ownsExisting() && userIdUnchanged() && validContact(request.resource.data);
+    }
+
+    // ---------- interviews ----------
+    function validInterview(d) {
+      return ownsApplication(d.applicationId)
+        && d.roundNumber is int && d.roundNumber >= 1 && d.roundNumber <= 20
+        && isText(d.timezone, 1, 64)
+        && d.outcome in ['pending', 'passed', 'failed', 'cancelled']
+        && isNullOrText(d.meetingUrl, 2048)
+        && isNullOrText(d.interviewer, 200)
+        && isNullOrText(d.notes, 10000);
+    }
+    match /interviews/{interviewId} {
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwn() && validInterview(request.resource.data);
+      allow update: if ownsExisting() && userIdUnchanged() && validInterview(request.resource.data);
+    }
+
+    // ---------- tasks ----------
+    function validTask(d) {
+      return isText(d.title, 1, 200)
+        && d.type in ['follow_up', 'interview_prep', 'recruiter_reply', 'other']
+        && d.priority in ['low', 'medium', 'high']
+        && d.completed is bool
+        && (d.applicationId == null || ownsApplication(d.applicationId));
+    }
+    match /tasks/{taskId} {
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwn() && validTask(request.resource.data);
+      allow update: if ownsExisting() && userIdUnchanged() && validTask(request.resource.data);
+    }
+
+    // ---------- payments: server-write only, owner-read ----------
+    match /paymentOrders/{orderId} {
+      allow read: if ownsExisting();
+      allow write: if false;
+    }
+    match /payments/{paymentId} {
+      allow read: if ownsExisting();
+      allow write: if false;
+    }
+    match /subscriptions/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+    match /plans/{planId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------- everything else ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
