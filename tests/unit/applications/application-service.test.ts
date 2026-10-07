@@ -1,7 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { applicationService } from "@/services/applications/application-service";
 import * as firestore from "firebase/firestore";
-import * as firebaseClient from "@/lib/firebase/client";
 
 vi.mock("firebase/firestore", () => {
   const collectionMock = vi.fn((_db, ...paths) => ({ type: "collection", path: paths.join("/") }));
@@ -57,6 +56,7 @@ describe("applicationService", () => {
       status: "applied" as const,
       appliedAt: "2026-04-10",
       location: "Mountain View, CA",
+      workMode: "remote",
       resumeName: "Resume.pdf",
     };
 
@@ -74,6 +74,7 @@ describe("applicationService", () => {
     expect(savedDoc?.userId).toBe("user-alice-123");
     expect(savedDoc?.companyName).toBe("Google");
     expect(savedDoc?.jobTitle).toBe("Software Engineer");
+    expect(savedDoc?.workMode).toBe("remote");
     expect(savedDoc?.createdAt).toBe("MOCK_SERVER_TIMESTAMP");
     expect(savedDoc?.updatedAt).toBe("MOCK_SERVER_TIMESTAMP");
     expect(app.id).toBe("mock-auto-id-123");

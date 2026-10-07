@@ -7,6 +7,7 @@ import {
   MinusCircle,
   FileText,
   Settings,
+  User,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -26,4 +27,5 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: "Not Selected", href: "/not-selected", icon: MinusCircle },
   { label: "Resume / Documents", href: ROUTES.resumes, icon: FileText },
   { label: "Settings", href: ROUTES.settings, icon: Settings },
+  { label: "Profile", href: ROUTES.profile, icon: User },
 ];

@@ -17,6 +17,7 @@ export interface Application extends OwnedEntity {
   resumeId?: string | null;
   /** Job description text pasted by the user. No scraping. */
   location?: string | null;
+  workMode?: string | null;
   resumeName?: string | null;
   resumeUrl?: string | null;
   jobDescriptionSnapshot?: string | null;

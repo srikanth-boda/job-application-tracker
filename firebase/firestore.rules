@@ -70,6 +70,7 @@ service cloud.firestore {
         && validSource(d.source)
         && validStatus(d.status)
         && isNullOrText(d.location, 200)
+        && isNullOrText(d.workMode, 50)
         && isNullOrText(d.resumeUrl, 2048)
         && isNullOrText(d.resumeName, 200)
         && isNullOrText(d.jobUrl, 2048)

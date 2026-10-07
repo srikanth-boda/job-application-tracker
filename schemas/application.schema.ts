@@ -13,6 +13,7 @@ const baseApplicationFields = {
   jobUrl: httpUrlSchema.nullable().optional().default(null),
   resumeId: z.string().min(1).nullable().optional().default(null),
   location: optionalText(200),
+  workMode: optionalText(50),
   resumeName: optionalText(200),
   resumeUrl: optionalText(2048),
   jobDescriptionSnapshot: optionalText(50_000),

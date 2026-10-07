@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell } from "lucide-react";
+import { Search, Bell, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/features/auth";
@@ -40,15 +40,15 @@ export function TopBar({ fallbackEmail }: { fallbackEmail: string | null }) {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <input
             type="search"
-            placeholder="Search applications, companies, roles..."
-            className="w-full rounded-xl border border-transparent bg-[#F1F5F9] py-2 pl-10 pr-4 text-[13.5px] text-slate-700 placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
+            placeholder="Search companies, roles, or keywords..."
+            className="w-full rounded-xl border border-transparent bg-[#F1F5F9] py-2 pl-10 pr-4 text-[13.5px] text-slate-700 placeholder:text-slate-400 focus:border-emerald-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
             id="topbar-search"
           />
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Bell Notifications */}
         <button
           className="relative flex h-9 w-9 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 transition-colors"
@@ -60,14 +60,17 @@ export function TopBar({ fallbackEmail }: { fallbackEmail: string | null }) {
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
         </button>
 
-        {/* User avatar */}
+        {/* User avatar with dropdown chevron */}
         <button
           onClick={handleSignOut}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-[12px] font-bold text-white shadow-sm hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 rounded-full p-0.5 hover:opacity-90 transition-opacity"
           title="Click to sign out"
           id="topbar-user-menu"
         >
-          {initials}
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7C3AED] text-[12px] font-bold text-white shadow-sm">
+            {initials}
+          </div>
+          <ChevronDown className="h-4 w-4 text-slate-500" />
         </button>
       </div>
     </header>

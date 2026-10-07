@@ -71,6 +71,7 @@ function mapDocToApplication(id: string, userId: string, data: DocumentData): Ap
     appliedDate: data.appliedDate ?? (appliedAtStr ? Timestamp.fromDate(new Date(appliedAtStr)) : null),
     appliedAt: appliedAtStr,
     location: data.location ?? null,
+    workMode: data.workMode ?? null,
     resumeUrl: data.resumeUrl ?? null,
     resumeName: data.resumeName ?? null,
     jobUrl: data.jobUrl ?? null,
@@ -191,6 +192,7 @@ export const applicationService = {
       appliedDate: appliedDateTimestamp,
       appliedAt: appliedAtString,
       location: input.location?.trim() || null,
+      workMode: (input as Record<string, unknown>).workMode ? String((input as Record<string, unknown>).workMode).trim() : null,
       resumeName: input.resumeName?.trim() || null,
       resumeUrl: (input as Record<string, unknown>).resumeUrl ? String((input as Record<string, unknown>).resumeUrl) : null,
       resumeId: input.resumeId || null,
@@ -298,6 +300,10 @@ export const applicationService = {
     if (input.jobUrl !== undefined) updates.jobUrl = input.jobUrl;
     if (input.resumeId !== undefined) updates.resumeId = input.resumeId;
     if (input.location !== undefined) updates.location = input.location?.trim() || null;
+    if ((input as Record<string, unknown>).workMode !== undefined) {
+      const wm = (input as Record<string, unknown>).workMode;
+      updates.workMode = wm ? String(wm).trim() : null;
+    }
     if (input.resumeName !== undefined) updates.resumeName = input.resumeName?.trim() || null;
     if ((input as Record<string, unknown>).resumeUrl !== undefined) {
       updates.resumeUrl = (input as Record<string, unknown>).resumeUrl || null;
@@ -348,7 +354,7 @@ export const applicationService = {
   ): Unsubscribe => {
     let uid: string;
     let onUpdate: (applications: Application[]) => void;
-    let errorHandler = onError;
+    const errorHandler = onError;
 
     if (typeof userIdOrUpdate === "string") {
       uid = userIdOrUpdate;

@@ -84,7 +84,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-6 py-5">
-        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-indigo-200">
+        <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center flex-shrink-0 shadow-sm shadow-emerald-200">
           <svg
             width="18"
             height="18"
@@ -154,9 +154,16 @@ export function Sidebar() {
           <Link
             href={ROUTES.newApplication}
             id="sidebar-add-application"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-[13.5px] font-semibold text-white shadow-sm shadow-indigo-100 hover:bg-indigo-500 transition-colors"
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13.5px] font-semibold transition-all duration-150",
+              pathname === ROUTES.newApplication
+                ? "bg-[#E6F4EA] text-[#0D825F] border border-[#CEEAD6] shadow-2xs"
+                : "bg-[#E6F4EA]/70 text-[#0D825F] hover:bg-[#E6F4EA] border border-transparent hover:border-[#CEEAD6]",
+            )}
           >
-            <Plus className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+            <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#0D825F] text-white">
+              <Plus className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+            </div>
             <span>Add New Application</span>
           </Link>
         </div>
@@ -197,7 +204,7 @@ export function Sidebar() {
       <div className="px-4 pb-4">
         <div className="rounded-2xl bg-[#F8FAFC] border border-slate-100 p-4">
           <div className="flex items-center gap-1.5 mb-1 text-slate-700">
-            <Target className="h-4 w-4 text-indigo-500" strokeWidth={2.2} aria-hidden />
+            <Target className="h-4 w-4 text-emerald-600" strokeWidth={2.2} aria-hidden />
             <span className="text-[12px] font-bold text-slate-800">
               Daily Goal
             </span>
@@ -212,15 +219,18 @@ export function Sidebar() {
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
             <div
               id="sidebar-daily-goal-bar"
-              className="h-2 rounded-full bg-indigo-500 transition-all duration-500"
+              className="h-2 rounded-full bg-emerald-600 transition-all duration-500"
               style={{ width: `${dailyPct * 100}%` }}
             />
           </div>
-          <p className="mt-2.5 text-[11px] text-slate-500 leading-snug">
-            {remaining === 0
-              ? "Goal achieved! Outstanding job today!"
-              : `You're ${remaining} application${remaining !== 1 ? "s" : ""} away from reaching your goal!`}
-          </p>
+          <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-slate-600 leading-snug">
+            <Target className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+            <span>
+              {remaining === 0
+                ? "Goal achieved! Outstanding job today!"
+                : `You're ${remaining} application${remaining !== 1 ? "s" : ""} away from reaching your goal!`}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -232,7 +242,7 @@ export function Sidebar() {
           title="Click to sign out"
           id="sidebar-user-profile"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-900 text-[12px] font-bold text-white shadow-sm">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#7C3AED] text-[12px] font-bold text-white shadow-sm">
             {initials}
           </div>
           <div className="flex-1 min-w-0">

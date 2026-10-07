@@ -11,6 +11,7 @@ export const ROUTES = {
   tasks: "/tasks",
   analytics: "/analytics",
   settings: "/settings",
+  profile: "/profile",
   billing: "/billing",
 } as const;
 
